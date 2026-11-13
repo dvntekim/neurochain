@@ -1,0 +1,89 @@
+{
+  "config": {
+    "lfp_cutoff_hz": 300.0,
+    "spike_band_hz": [
+      300.0,
+      7500.0
+    ],
+    "filter_order": 4,
+    "zero_phase": true,
+    "threshold_sigma": 4.5,
+    "polarity": "neg",
+    "refractory_s": 0.001,
+    "psd_resolution_hz": 1.2,
+    "lfp_floor_hz": 1.0,
+    "max_saturation_fraction": 0.001,
+    "drop_bits": 0
+  },
+  "units": "ADC LSB",
+  "dataset": {
+    "n_clips": 743,
+    "n_clean_clips": 737,
+    "n_saturated_clips_excluded": 6,
+    "saturated_sample_fraction_all_clips": 0.003777626097554863,
+    "total_duration_s": 3757.304643899442,
+    "clean_duration_s": 3726.9305207106654,
+    "fs_hz": 19531.0,
+    "dc_offset": {
+      "median": 14.154740916367762,
+      "p25": 8.709233154635832,
+      "p75": 21.128604137539764
+    }
+  },
+  "noise": {
+    "sigma": {
+      "median": 7.0068509041746,
+      "p25": 6.066932491568615,
+      "p75": 7.998573441450398
+    },
+    "sigma_over_quantisation_rms": 24.272443534180667,
+    "bits_until_lsb_equals_sigma": 2.808766198058767
+  },
+  "spectrum": {
+    "lfp_power_fraction": {
+      "median": 0.832829008334662,
+      "p25": 0.7418606674821316,
+      "p75": 0.9019978857044828
+    },
+    "lfp_rms": {
+      "median": 17.612586363283363,
+      "p25": 12.454505154944133,
+      "p75": 24.262275853842436
+    },
+    "spike_band_rms": {
+      "median": 7.4840091166382745,
+      "p25": 6.411536774872831,
+      "p75": 8.707117680870239
+    },
+    "psd_slope_lfp_band": -1.360976362662678,
+    "psd_slope_spike_band": -1.267699010487088,
+    "asd_at_10_hz": 2.144494883285529,
+    "asd_at_1_khz": 0.13997689899750795,
+    "asd_floor_above_8_khz": 0.03266980738201872
+  },
+  "spikes": {
+    "n_spikes": 28575,
+    "rate_hz_overall": 7.6671673488968635,
+    "rate_hz_per_clip": {
+      "median": 0.9895025888885511,
+      "p25": 0.19777627008799734,
+      "p75": 9.296614374981012
+    },
+    "clips_without_spikes": 158,
+    "gaussian_noise_crossing_rate_hz": 0.06067396302278521,
+    "detected_polarity_fraction": 0.8603655574447413,
+    "amplitude": {
+      "median": 43.749188413459166,
+      "p25": 36.43190189179784,
+      "p75": 55.75514658581884,
+      "p95": 91.01427336182311
+    },
+    "snr": {
+      "median": 5.545791325201864,
+      "p25": 4.905948273900319,
+      "p75": 6.816996042441325,
+      "p95": 11.034263662697702
+    }
+  },
+  "example_clip_id": "ed27ab15-7e60-4151-bd2c-380f376b9a75"
+}
