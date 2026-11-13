@@ -89,6 +89,7 @@ well while the implant is stimulating and its electrodes are aging?
 ```
 make setup     # uv sync + pre-commit hooks
 make data      # download / verify datasets
+make data-describe  # print what the Nason and NoMAD files contain
 make u0        # data + U0 figures + key number + README table
 make test      # pytest
 make lint      # ruff + mypy
@@ -107,12 +108,17 @@ Run Python through uv: `uv run python ...`, `uv run pytest`.
 - **NoMAD (Dryad, doi:10.5061/dryad.q83bk3jtp):** two NWB files (`session1.nwb`,
   `session2.nwb`, 247 MB total). File downloads need a Dryad bearer token
   (`DRYAD_TOKEN`) or a manual browser download; checksums come from the Dryad
-  API. Dryad's own abstract describes monkey motor cortex data. The plan's
-  "192-channel human" description is unverified until the files are opened.
-- **Nason SBP data (Deep Blue, doi:10.7302/wwya-5q86):** three `.mat` files plus
-  a README, 74 MB, CC BY-NC 4.0. Deep Blue sits behind a Cloudflare challenge,
-  so it is a manual browser download; the repo then verifies and records
-  checksums. Do not try to script around the challenge.
+  API. Verified by opening the files: one human participant (BrainGate T11,
+  *Homo sapiens*), 192 channels, threshold crossings in 20 ms bins plus cursor
+  kinematics. No broadband and no electrode table. `session2` was recorded
+  first; `session1` follows 273.9 days later. Loader: `neurochain.data.nomad`.
+- **Nason SBP data (Deep Blue, doi:10.7302/wwya-5q86):** three MATLAB v5 `.mat`
+  files plus a README, 74 MB, CC BY-NC 4.0. Deep Blue sits behind a Cloudflare
+  challenge, so it is a manual browser download, verified against hashes pinned
+  from the first copy. Do not try to script around the challenge. Only
+  `MultiUnitInVivo.mat` has broadband (10 s, one channel, 30 kHz, in µV); the
+  online file is 96 channels of 1 ms SBP and threshold crossings with finger
+  position. Loader: `neurochain.data.nason`.
 - **MEArec:** generated locally (U2).
 
 ## Toolchain status

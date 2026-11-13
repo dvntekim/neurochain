@@ -26,18 +26,43 @@ Key number: spike-band noise σ = 7.01 LSB; median detected spike 43.7 LSB = 5.5
 
 Carried forward from U0:
 
-- [ ] **Nason data:** download the three `.mat` files by browser into
-      `data/raw/nason/`, then write and test the loader, and pin the SHA-256
-      values in `registry.py`. Needed before U2's second done-criterion.
-- [ ] **NoMAD data:** download `session1.nwb` and `session2.nwb` into
-      `data/raw/nomad/` (browser, or `DRYAD_TOKEN`), then write and test the NWB
-      loader. Needed before U4.
-- [ ] **NoMAD description to check:** the plan calls it a 192-channel human
-      dataset. Dryad's abstract describes monkey motor cortex, and the release
-      holds two sessions. Confirm species, channel count and session structure
-      when the files are open; with two sessions, "held-out session" means train
-      on one and test on the other, and U6's "R² vs simulated weeks" has to come
-      from the aging model, not from many recorded weeks.
+- [x] **Nason data:** files downloaded, SHA-256 pinned in `registry.py`, loader
+      in `neurochain.data.nason` with tests (`tests/test_nason.py`, and
+      `tests/test_nason_data.py` on the real files). Ready for U2.
+- [x] **NoMAD data:** files downloaded and verified, loader in
+      `neurochain.data.nomad` with tests (`tests/test_nomad.py`, and
+      `tests/test_nomad_data.py` on the real files). Ready for U4.
+- [x] **NoMAD description checked:** the plan was right. Both files record one
+      human participant (BrainGate T11, *Homo sapiens*) with 192 channels.
+      `make data-describe` prints this. The monkey wording comes from the
+      paper's abstract, which Dryad reuses; this release is the human data.
+
+What opening the files showed, for the units that use them:
+
+- [ ] **U6 cannot age NoMAD waveforms, because there are none.** NoMAD holds
+      threshold crossings in 20 ms bins: no broadband, no spike shapes, no
+      electrode table, no impedance. Impedance, noise and amplitude drift
+      therefore have to be modelled as changes to crossing counts (for example
+      through an amplitude-distribution model fitted on Neuralink or Nason
+      broadband), or the aging model has to be validated on broadband data and
+      only its effect carried to NoMAD. Decide this in `docs/U6_design.md`.
+- [ ] **NoMAD is two sessions 273.9 days apart, and `session2` is the earlier
+      one.** Held-out-session evaluation means train on one, test on the other.
+      U6's "R² vs simulated weeks" comes from the aging model; the real pair
+      gives one measured point at about 39 weeks to compare it with.
+- [ ] **NoMAD time is not continuous:** 255 contiguous segments in `session1`
+      (some one bin long) and 16 in `session2`. Decoders and any filtering must
+      respect `NomadSession.segment_starts`. Only about 37 % of bins fall
+      inside a trial.
+- [ ] **NoMAD `cursor_vel` is not the derivative of `cursor_pos`** (correlation
+      about 0.1 to 0.2 with the finite difference). Work out what it is before
+      choosing the decoding target in U4.
+- [ ] **Nason online SBP is a sum over a varying number of samples** (0 to 4 per
+      1 ms bin, mean 2.0). Divide by `sample_width` or re-bin before comparing
+      it with threshold crossings in U2. Its unit is not stated.
+- [ ] **Nason in-vivo broadband is the only µV-scaled real recording so far**
+      (10 s, one channel, 30 kHz, three sorted units). Use it in U1 to anchor
+      the front-end emulator's noise in real microvolts.
 - [ ] **CI has not run on GitHub yet:** the workflow is written and its steps
       pass locally, but the repo has no remote.
 - [ ] **Causal filtering:** U0's figures use zero-phase filters. A causal filter

@@ -130,13 +130,26 @@ NASON = Dataset(
     manual_steps=(
         "Deep Blue Data requires a browser (Cloudflare challenge).\n"
         "  Open the landing page, download the three .mat files (74 MB in total),\n"
-        "  and move them into the directory shown above. No checksum is published,\n"
-        "  so the first verified copy will be pinned in this registry."
+        "  and move them into the directory shown above. The publisher gives no\n"
+        "  checksum; the hashes pinned here are those of the copy downloaded on\n"
+        "  2026-11-13, so a mismatch means the file differs from that copy."
     ),
     files=(
-        RemoteFile(name="MultiUnitSim.mat"),
-        RemoteFile(name="MultiUnitInVivo.mat"),
-        RemoteFile(name="OnlineTrainingData.mat"),
+        RemoteFile(
+            name="MultiUnitSim.mat",
+            sha256="0f5ea647ee5233dfe6e3368fa6e9ffc13f4eab2bda84abd194b39035c1da3f99",
+            size_bytes=18_783_744,
+        ),
+        RemoteFile(
+            name="MultiUnitInVivo.mat",
+            sha256="fac792eb8b21d9f443e2004a31d4eb4859b27bca7951883568b9fe33af50a911",
+            size_bytes=1_249_657,
+        ),
+        RemoteFile(
+            name="OnlineTrainingData.mat",
+            sha256="8b761b9cdf89832e12d324e515858e5095ae09f92e899cf9f381c3e2efd5a50a",
+            size_bytes=57_987_417,
+        ),
     ),
 )
 

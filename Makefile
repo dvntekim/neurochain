@@ -1,6 +1,6 @@
 # NeuroChain: one command per result. Run `make help` for the list.
 .DEFAULT_GOAL := help
-.PHONY: help setup data data-status u0 u0-key readme test test-fast lint format clean
+.PHONY: help setup data data-status data-describe u0 u0-key readme test test-fast lint format clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-12s %s\n", $$1, $$2}'
@@ -14,6 +14,10 @@ data: ## Download and verify every dataset that can be scripted
 
 data-status: ## Show which dataset files are on disk and verified
 	uv run neurochain-data status
+
+data-describe: ## Print what the Nason and NoMAD files contain (subject, channels, sessions)
+	uv run python -m neurochain.data.nason
+	uv run python -m neurochain.data.nomad
 
 u0: ## U0: fetch Neuralink data, write both figures, the metrics and the README table
 	uv run neurochain-data fetch neuralink --strict

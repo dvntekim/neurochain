@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "matplotlib>=3.9",
     "numpy>=2.0",
+    "pynwb>=4.2.0",
     "scipy>=1.13",
 ]
 
@@ -64,5 +65,5 @@ strict = true
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
-module = ["scipy.*"]
+module = ["scipy.*", "pynwb.*"]
 ignore_missing_imports = true
