@@ -22,8 +22,8 @@ The project has three parts:
 | Unit | What it delivers | State |
 |---|---|---|
 | U0 | Repo, data loaders, band-split, spectra and spike amplitudes | **Done** |
-| U1 | Electrode and front-end model (ngspice), noise budget, NEF | Next |
-| U2 | ADC sweeps; threshold, NEO and spiking-band-power features; fixed point | Planned |
+| U1 | Electrode and front-end model (ngspice), noise budget, NEF | **Done** |
+| U2 | ADC sweeps; threshold, NEO and spiking-band-power features; fixed point | Next |
 | U3 | Power model and co-design: accuracy vs µW Pareto | Planned |
 | U4 | Kalman and GRU decoders, session-held-out evaluation | Planned |
 | U5 | Stimulation artifacts and fixed-point cancellation | Planned |
@@ -95,6 +95,78 @@ threshold crossing. The amplitude distribution is truncated at the threshold.
 The analog chain before the ADC is unknown. More in
 [docs/U0_design.md](docs/U0_design.md#limitations).
 
+### U1: what the front end adds, and what it costs
+
+A circuit model, not a dataset: a platinum Utah electrode (measured Randles
+fit) into a capacitive-feedback amplifier, solved three ways. This is the first
+unit in real microvolts.
+
+<!-- BEGIN U1_RESULTS -->
+| Quantity | Value | How it is defined |
+|---|---|---|
+| Electrode impedance at 1 kHz | 218 kΩ at −65° | platinum Utah electrode in saline (Straka et al., 2018); ngspice impedance within 0.07% of the analytic model |
+| Front-end noise: hand / analytic / ngspice | 3.399 / 3.405 / 3.399 µV rms | referred to the tissue, 300 Hz to 7.5 kHz, at 37 °C |
+| Largest disagreement between methods | 0.27% | across three electrode models; the done-criterion is 10 % |
+| Electrode / amplifier share | 2.51 / 2.31 µV rms | analytic model; the two add in quadrature |
+| Same electrode with an ideal-capacitor double layer | 0.95 µV electrode, 2.49 µV total | the textbook Randles circuit, matched to the same impedance magnitude at 1 kHz |
+| Amplifier | gain 95.6, 0.98 Hz to 7.14 kHz | 10 µA at 1.8 V = 18 µW; NEF 4.00 |
+| Electrode offset tolerated | AC: blocked; DC at the same gain: 8.4 mV | surviving 300 mV DC-coupled needs gain 2.5 and 17.5 ADC bits, against 12.3 |
+| Time on the rail after a 50 mV offset step | 0.29 s at 1 Hz; 2.90 s at 0.1 Hz | emulated; the formula gives 0.291 s and 2.898 s |
+| Emulator noise against the model | 295.1 against 295.4 µV rms | at the amplifier output, 300 Hz to 7.5 kHz, 60 s of emulated silence |
+| Noise σ of a real in-vivo channel | 13.23 µV | 4.4 times the model's 3.00 µV through the same filter (Nason et al., one channel, 10 s) |
+| That channel after the emulated front end | 13.26 µV (predicted 13.19) | up from 12.84 µV with the emulator's noise off |
+| The same at a quarter of the bias current | 13.81 µV | amplifier power 4.5 µW instead of 18 µW |
+<!-- END U1_RESULTS -->
+
+This table is generated from [results/u1_metrics.json](results/u1_metrics.json)
+by `make readme`. The ngspice netlists are in [spice/](spice/).
+
+Three findings:
+
+1. **The textbook electrode model understates noise by a factor of 2.6.** A real
+   double layer is lossy (a constant-phase element), and only the lossy part of
+   an impedance makes thermal noise. With an ideal capacitor matched to the same
+   impedance at 1 kHz, electrode noise would look like 0.95 µV instead of
+   2.51 µV.
+2. **The amplifier is quieter than the brain needs.** A real in-vivo channel is
+   over four times noisier than the front end's own floor, because neural
+   background dominates. Cutting the amplifier's bias current to a quarter
+   raises that channel's noise by 4 %. This is the trade U3 turns into a Pareto
+   curve.
+3. **Halving the bias current does not, by itself, raise an amplifier's total
+   noise.** The noise density goes up by √2 and the bandwidth halves, so the
+   two cancel; the NEF does not move either. The cost only appears when the
+   bandwidth is held fixed.
+
+Findings 2 and 3 can be re-run with `make u1-key ARGS="..."`; see the
+[prediction checks](docs/U1_design.md#6-prediction-checks).
+
+![Impedance magnitude and phase of three electrode models, analytic and ngspice](figures/u1_electrode_impedance.png)
+
+*Electrode impedance: the measured fit in saline, the ideal-capacitor version
+with the same |Z| at 1 kHz, and the fit after implantation. Lines: analytic
+model. Markers: ngspice.*
+
+![Input-referred noise density and the spike-band noise budget](figures/u1_noise_budget.png)
+
+*Left: noise density referred to the tissue signal, by source, with ngspice
+points. Right: spike-band noise by electrode model. Units: nV/√Hz and µV rms.*
+
+![Offset tolerance of AC and DC coupling, and recovery from an offset step](figures/u1_coupling.png)
+
+*Left: output DC level against electrode offset for three coupling choices.
+Right: emulated recovery after a 50 mV offset step at two high-pass corners.*
+
+![Spectrum and noise of a real in-vivo channel before and after the emulated front end](figures/u1_emulator_nason.png)
+
+*Dataset: Nason et al. (2020), one channel of monkey W, 10 s at 30 kHz, no
+split. The emulated front end barely changes a real channel's noise, at 18 µW
+or at 4.5 µW.*
+
+**Limits of these numbers.** The amplifier model has no 1/f noise, rails are a
+hard clip, and the emulator adds noise to a recording that already has its own.
+More in [docs/U1_design.md](docs/U1_design.md#limitations).
+
 ## Reproduce
 
 Requires [uv](https://docs.astral.sh/uv/) and `make`. Python 3.12 is installed
@@ -102,9 +174,13 @@ by uv.
 
 ```
 make setup     # environment and git hooks
-make u0        # download data (65 MB), write both figures, metrics and the table above
-make test      # 80+ tests; the ones needing data skip if it is absent
+make u0        # download data (65 MB), write the U0 figures, metrics and table
+make u1        # U1 figures, metrics, table and netlists (needs ngspice and the Nason data)
+make test      # 190+ tests; the ones needing data or ngspice skip if absent
 ```
+
+U1 needs [ngspice](https://ngspice.sourceforge.io/) (`brew install ngspice`) and
+the Nason files, which have to be downloaded in a browser (see Data).
 
 `make help` lists every target.
 
@@ -127,11 +203,13 @@ src/neurochain/
   recording.py          the container every loader returns
   data/                 registry, verified downloader, loaders, synthetic generator
   dsp/                  band-split filters, spectra, spike detection
+  frontend/             electrode, amplifier, ngspice runner, emulator
   analysis/             per-unit analyses and their figures
   viz.py                shared figure style
 scripts/                one script per figure or key number
 tests/                  pytest; no test needs downloaded data unless marked `data`
 docs/                   one design note per unit, plus references
+spice/                  reference ngspice netlists (generated; kept in sync by a test)
 figures/  results/      committed outputs, regenerated by make
 ```
 
@@ -142,6 +220,7 @@ alternatives considered and the course concepts involved, plus prediction
 checks: change one parameter, predict the result, then run it.
 
 - [U0: repo, data and band-split](docs/U0_design.md)
+- [U1: electrode and front-end model](docs/U1_design.md)
 - [References](docs/references.md)
 
 ## Safety

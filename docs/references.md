@@ -50,12 +50,40 @@ first uses them. DOIs were resolved on 2026-11-13.
   <https://doi.org/10.1038/s41592-019-0686-2>. Filter design, filtering and
   Welch's method.
 
+## U1: electrode and front-end model
+
+- **Straka, M. M., Shafer, B., Vasudevan, S., Welle, C. and Rieth, L. (2018).**
+  Characterizing longitudinal changes in the impedance spectra of in-vivo
+  peripheral nerve electrodes. *Micromachines* 9(11), 587.
+  <https://doi.org/10.3390/mi9110587>. Open access. Table 1 gives the Randles
+  fits used for the electrode: Blackrock platinum Utah arrays in 0.15 M PBS
+  (96 spectra) and two or more weeks after implantation in rat sciatic nerve
+  (854 spectra). Values were read from the article's full-text table.
+- **Harrison, R. R. and Charles, C. (2003).** A low-power low-noise CMOS
+  amplifier for neural recording applications. *IEEE Journal of Solid-State
+  Circuits* 38(6), 958-965. <https://doi.org/10.1109/JSSC.2003.811979>. The
+  amplifier topology. From the abstract: 0.025 Hz to 7.2 kHz, 2.2 µV rms, 80 µW.
+  The gain-setting capacitors (20 pF and 200 fF) are as reported for the same
+  design. **Not re-verified this session:** the ±2.5 V supply, which gives the
+  16 µA and the NEF of 4.0 used here. The full text was not reachable; check it
+  before quoting those three numbers elsewhere.
+- **Steyaert, M. S. J. and Sansen, W. M. C. (1987).** A micropower low-noise
+  monolithic instrumentation amplifier for medical purposes. *IEEE Journal of
+  Solid-State Circuits* 22(6), 1163-1168.
+  <https://doi.org/10.1109/JSSC.1987.1052869>. Origin of the noise efficiency
+  factor.
+- **Lempka, S. F. et al. (2011).** Theoretical analysis of intracortical
+  microelectrode recordings. *Journal of Neural Engineering* 8(4), 045006.
+  <https://doi.org/10.1088/1741-2560/8/4/045006> (open manuscript:
+  <https://pmc.ncbi.nlm.nih.gov/articles/PMC3196618>). Thermal noise of 6.2 µV
+  and biological noise of 10.2 µV over 450 to 5000 Hz, 12 µV in total; brain
+  resistivity 300 Ω·cm. Used to interpret why a real channel is noisier than the
+  front-end model.
+- **ngspice.** Open-source circuit simulator, version 47 used here.
+  <https://ngspice.sourceforge.io/>.
+
 ## Later units (listed in the plan, not yet relied on)
 
 - **Karpowicz, B. M. et al. (2025).** Stabilizing brain-computer interfaces
   through alignment of latent dynamics. *Nature Communications* 16, 4662.
   <https://doi.org/10.1038/s41467-025-59652-y>. U6.
-- **Harrison, R. R. and Charles, C. (2003).** A low-power low-noise CMOS
-  amplifier for neural recording applications. *IEEE Journal of Solid-State
-  Circuits* 38(6), 958-965. <https://collections.lib.utah.edu/ark:/87278/s68p6j6g>.
-  U1.

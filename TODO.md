@@ -60,26 +60,59 @@ What opening the files showed, for the units that use them:
 - [ ] **Nason online SBP is a sum over a varying number of samples** (0 to 4 per
       1 ms bin, mean 2.0). Divide by `sample_width` or re-bin before comparing
       it with threshold crossings in U2. Its unit is not stated.
-- [ ] **Nason in-vivo broadband is the only µV-scaled real recording so far**
-      (10 s, one channel, 30 kHz, three sorted units). Use it in U1 to anchor
-      the front-end emulator's noise in real microvolts.
+- [x] **Nason in-vivo broadband is the only µV-scaled real recording so far**
+      (10 s, one channel, 30 kHz, three sorted units). Used in U1: its
+      spike-band noise is 13.2 µV, 4.4 times the front-end model's floor.
 - [ ] **CI on GitHub:** repo pushed to `github.com/dvntekim/neurochain` (main at
       d19a39f). Tick once the Actions tab shows a green run.
 - [ ] **Causal filtering:** U0's figures use zero-phase filters. A causal filter
       of the same order loses 60 % of threshold crossings. U2 onward must use
       causal filters for anything described as implant-realistic.
 
-## U1: electrode and front-end model
+## U1: electrode and front-end model — DONE
 
 Done-criterion: simulated noise within 10 % of hand calculation.
 
-- [ ] Install ngspice (`brew install ngspice`)
-- [ ] Randles electrode model in ngspice; impedance sweep against frequency
-- [ ] LNA model; noise budget and NEF
-- [ ] AC versus DC coupling; DC-offset tolerance
-- [ ] Python front-end emulator applying modelled noise, bandwidth and offset
-      to real data
-- [ ] `docs/U1_design.md`, key-number script, three prediction checks
+- [x] ngspice installed (version 47); CI installs it too
+- [x] Randles electrode in ngspice, with the measured constant-phase double
+      layer as an RC ladder; impedance sweep against the analytic model
+- [x] Capacitive-feedback amplifier model; noise budget and NEF
+- [x] Hand calculation, analytic network model and ngspice agree within 0.3 %
+      for three electrode models (`tests/test_frontend.py`)
+- [x] AC versus DC coupling: offset tolerance, ADC bits, settling after a step
+- [x] Causal, seeded front-end emulator; checked on silence and on the Nason
+      in-vivo recording
+- [x] `make u1` writes four figures, `results/u1_metrics.json`, the README
+      table and the reference netlists in `spice/`
+- [x] `docs/U1_design.md` with the worked hand calculation and four prediction
+      checks; `make u1-key`
+
+Key number: front-end noise floor 3.41 µV rms in the spike band (electrode
+2.51 µV, amplifier 2.31 µV at 18 µW).
+
+Carried forward from U1:
+
+- [ ] **No public dataset here has both broadband and behaviour.** The emulator
+      needs a signal in microvolts. Neuralink is broadband without a voltage
+      scale or behaviour; Nason's behaviour file and NoMAD hold features, not
+      broadband. So the front end cannot simply be swept in front of a decoder.
+      U3 needs a deliberate bridge: measure how front-end settings change the
+      features (threshold crossings, SBP) on broadband with ground truth
+      (MEArec, Nason in vivo), then apply that change to the feature datasets.
+      Decide this at the start of U3, or find a dataset that has both.
+- [ ] **U3 must include neural background noise.** In vivo the noise is four
+      times the front end's floor, and a quarter of the bias current costs 4 %
+      in σ. A power model that sees only front-end noise would overspend on the
+      amplifier.
+- [ ] **Aliasing belongs to U2's ADC model.** The amplifier is a single pole.
+      By a hand estimate about 30 % of its noise power lies above 15 kHz, and a
+      30 kHz sampler folds that back. The emulator drops it.
+- [ ] **No 1/f noise in the amplifier model.** Small in the spike band (about
+      4 % of noise power for a 100 Hz corner, hand estimate), large below
+      300 Hz. Add it before any LFP-band result.
+- [ ] **Rails are a hard clip.** U5 needs saturation recovery.
+- [ ] **Harrison's supply voltage is unverified.** The 5 V that gives 16 µA and
+      NEF 4.0 is from memory; the full text was not reachable. Check the paper.
 
 ## U2: ADC and features
 

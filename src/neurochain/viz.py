@@ -31,6 +31,10 @@ COLOR_LFP = "#2a78d6"  # blue
 COLOR_SPIKE = "#eb6834"  # orange
 COLOR_ACCENT = "#1baf7a"  # aqua, for a third series when one is needed
 
+# Generic series colours, in the fixed order they are assigned. The first three
+# stay distinguishable in every pairing, so no figure uses more than three.
+SERIES = (COLOR_LFP, COLOR_SPIKE, COLOR_ACCENT)
+
 DPI = 200
 
 

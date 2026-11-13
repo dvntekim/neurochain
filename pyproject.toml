@@ -54,6 +54,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D"]
+# Figure code is mostly long text strings; wrapping them hurts more than it helps.
+"src/neurochain/analysis/*_plots.py" = ["E501"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

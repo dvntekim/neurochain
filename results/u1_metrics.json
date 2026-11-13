@@ -1,0 +1,178 @@
+{
+  "spice_available": true,
+  "amplifier": {
+    "ideal_gain": 99.99999999999999,
+    "gain_1khz": 95.60528362565061,
+    "midband_gain": 97.92386660572784,
+    "f_low_hz": 0.9774675597832918,
+    "f_high_hz": 7143.648588284652,
+    "f_high_ideal_source_hz": 7500.000000000006,
+    "i_total_ua": 10.0,
+    "v_supply_v": 1.8,
+    "power_uw": 18.0,
+    "noise_density_nv": 27.06386748435713,
+    "nef_nominal": 4.0,
+    "nef_measured": 3.9997709503461962,
+    "total_noise_all_frequencies_uv": 2.9373490604035113,
+    "c_load_pf": 12.460300463018832,
+    "r2_ohm": 795774715459.4767,
+    "gm_us": 65.47769373758712,
+    "output_swing_v": 0.8,
+    "temperature_k": 310.15,
+    "spice": {
+      "gain_1khz": 95.60638625981629,
+      "f_low_hz": 0.978447170468668,
+      "f_high_hz": 7140.578381727763
+    }
+  },
+  "electrodes": {
+    "in_saline": {
+      "name": "Utah Pt, in saline",
+      "rs_ohm": 7300.0,
+      "rct_ohm": 4600000000.0,
+      "q_s_sn": 7.2e-09,
+      "n": 0.74,
+      "z_1khz_ohm": 217788.72020674378,
+      "phase_1khz_deg": -64.8347686355391,
+      "spice_max_relative_error": 0.000673610151411963
+    },
+    "ideal_capacitor": {
+      "name": "Utah Pt, in saline (ideal capacitor)",
+      "rs_ohm": 7300.0,
+      "rct_ohm": 4600000000.0,
+      "q_s_sn": 7.31188817118054e-10,
+      "n": 1.0,
+      "z_1khz_ohm": 217788.7202067438,
+      "phase_1khz_deg": -88.07644762790538,
+      "spice_max_relative_error": 6.1427999738381275e-09
+    },
+    "implanted": {
+      "name": "Utah Pt, implanted",
+      "rs_ohm": 25000.0,
+      "rct_ohm": 50000000000.0,
+      "q_s_sn": 1.1e-07,
+      "n": 0.55,
+      "z_1khz_ohm": 92279.68413971932,
+      "phase_1khz_deg": -37.611563754997626,
+      "spice_max_relative_error": 0.0005153030023684006
+    }
+  },
+  "noise_band_hz": [
+    300.0,
+    7500.0
+  ],
+  "noise": {
+    "in_saline": {
+      "hand": {
+        "electrode_uv": 2.5060176651653743,
+        "lna_uv": 2.296445306798764,
+        "total_uv": 3.3990859926219845
+      },
+      "analytic": {
+        "electrode_uv": 2.506090001929133,
+        "lna_uv": 2.305173750010166,
+        "total_uv": 3.4050423074471623
+      },
+      "spice": {
+        "electrode_uv": 2.5030590000000004,
+        "lna_uv": 2.300009,
+        "total_uv": 3.399316
+      },
+      "max_disagreement": 0.0017523283724232286
+    },
+    "ideal_capacitor": {
+      "hand": {
+        "electrode_uv": 0.9488230094831385,
+        "lna_uv": 2.296445306798764,
+        "total_uv": 2.4847386483175065
+      },
+      "analytic": {
+        "electrode_uv": 0.9491204583278169,
+        "lna_uv": 2.3036697900900402,
+        "total_uv": 2.491530482693298
+      },
+      "spice": {
+        "electrode_uv": 0.9469586,
+        "lna_uv": 2.2984240000000002,
+        "total_uv": 2.485857
+      },
+      "max_disagreement": 0.0027334200240294315
+    },
+    "implanted": {
+      "hand": {
+        "electrode_uv": 2.5596029110954155,
+        "lna_uv": 2.296445306798764,
+        "total_uv": 3.4387829401702854
+      },
+      "analytic": {
+        "electrode_uv": 2.5596046796638654,
+        "lna_uv": 2.3002514157832614,
+        "total_uv": 3.441327170143818
+      },
+      "spice": {
+        "electrode_uv": 2.555443,
+        "lna_uv": 2.295203,
+        "total_uv": 3.4348569999999996
+      },
+      "max_disagreement": 0.0018836796244554588
+    }
+  },
+  "harrison": {
+    "published_noise_uv": 2.2,
+    "supply_current_ua": 16.000000000000004,
+    "nef_from_published_values": 3.9983163164463247,
+    "model_total_noise_uv": 2.2000154734571975,
+    "model_noise_density_nv": 20.686951396751066,
+    "nef_limit_differential_pair": 2.0203050891044216,
+    "nef_limit_current_mirror_ota": 2.857142857142857
+  },
+  "coupling": {
+    "gain_ac": 95.60528362565061,
+    "input_range_ac_mv": 8.36773836823138,
+    "dc_offset_tolerance_same_gain_mv": 8.36773836823138,
+    "worst_offset_mv": 300.0,
+    "dc_gain_for_worst_offset": 2.5,
+    "adc_bits_ac": 12.262949304855654,
+    "adc_bits_dc": 17.52003965580108
+  },
+  "settling": {
+    "step_mv": 50.0,
+    "runs": [
+      {
+        "f_low_hz": 1.0,
+        "time_constant_s": 0.15915494309189535,
+        "saturation_time_analytic_s": 0.2910701623321551,
+        "saturation_time_simulated_s": 0.2911666666666667,
+        "recovery_to_noise_s": 1.5622159689084127
+      },
+      {
+        "f_low_hz": 0.1,
+        "time_constant_s": 1.5915494309189535,
+        "saturation_time_analytic_s": 2.8977812754340055,
+        "saturation_time_simulated_s": 2.8975666666666666,
+        "recovery_to_noise_s": 15.554063232707986
+      }
+    ]
+  },
+  "emulator": {
+    "fs_hz": 30000.0,
+    "seconds": 60.0,
+    "band_output_rms_measured_uv": 295.1221908088831,
+    "band_output_rms_predicted_uv": 295.3624851757908,
+    "sigma_after_filter_measured_uv": 3.0029336221683867,
+    "sigma_after_filter_predicted_uv": 3.001580965047978
+  },
+  "nason": {
+    "fs_hz": 30000.0,
+    "sigma_recorded_uv": 13.229813232910857,
+    "sigma_band_limited_uv": 12.840843746205083,
+    "sigma_emulated_uv": 13.262484824923122,
+    "sigma_predicted_uv": 13.186991939187365,
+    "sigma_model_floor_uv": 3.001580965047978,
+    "recorded_over_model": 4.407614982559495,
+    "sigma_quarter_bias_uv": 13.805434650122974,
+    "quarter_bias_power_uw": 4.5,
+    "detections_recorded": 823,
+    "detections_emulated": 821
+  }
+}

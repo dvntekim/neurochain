@@ -1,6 +1,6 @@
 # NeuroChain: one command per result. Run `make help` for the list.
 .DEFAULT_GOAL := help
-.PHONY: help setup data data-status data-describe u0 u0-key readme test test-fast lint format clean
+.PHONY: help setup data data-status data-describe u0 u1 u1-key u0-key readme test test-fast lint format clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-12s %s\n", $$1, $$2}'
@@ -27,6 +27,14 @@ u0: ## U0: fetch Neuralink data, write both figures, the metrics and the README 
 
 u0-key: ## U0: print the key numbers (add ARGS="--threshold-sigma 3.5" to change a parameter)
 	uv run python scripts/u0_key_number.py $(ARGS)
+
+u1: ## U1: electrode and front-end figures, metrics, netlists and the README table
+	uv run python scripts/u1_figures.py --strict
+	uv run python scripts/update_readme.py
+	uv run python scripts/u1_key_number.py
+
+u1-key: ## U1: print the key numbers (add ARGS="--bias-scale 0.5" to change a parameter)
+	uv run python scripts/u1_key_number.py $(ARGS)
 
 readme: ## Regenerate the README results tables from results/*.json
 	uv run python scripts/update_readme.py

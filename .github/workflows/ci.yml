@@ -16,6 +16,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
+      # ngspice runs the U1 circuit tests; without it they skip.
+      - name: Install ngspice
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ngspice
       - name: Install
         run: uv sync --locked
       - name: Lint
