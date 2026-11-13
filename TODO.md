@@ -63,8 +63,8 @@ What opening the files showed, for the units that use them:
 - [ ] **Nason in-vivo broadband is the only µV-scaled real recording so far**
       (10 s, one channel, 30 kHz, three sorted units). Use it in U1 to anchor
       the front-end emulator's noise in real microvolts.
-- [ ] **CI has not run on GitHub yet:** the workflow is written and its steps
-      pass locally, but the repo has no remote.
+- [ ] **CI on GitHub:** repo pushed to `github.com/dvntekim/neurochain` (main at
+      d19a39f). Tick once the Actions tab shows a green run.
 - [ ] **Causal filtering:** U0's figures use zero-phase filters. A causal filter
       of the same order loses 60 % of threshold crossings. U2 onward must use
       causal filters for anything described as implant-realistic.
