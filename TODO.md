@@ -63,8 +63,12 @@ What opening the files showed, for the units that use them:
 - [x] **Nason in-vivo broadband is the only µV-scaled real recording so far**
       (10 s, one channel, 30 kHz, three sorted units). Used in U1: its
       spike-band noise is 13.2 µV, 4.4 times the front-end model's floor.
-- [ ] **CI on GitHub:** repo pushed to `github.com/dvntekim/neurochain` (main at
-      d19a39f). Tick once the Actions tab shows a green run.
+- [x] **CI on GitHub:** green on `github.com/dvntekim/neurochain`, including the
+      U1 commit (d248678), where the ngspice tests ran on Linux with ngspice 45
+      and passed.
+- [ ] **CI housekeeping:** GitHub warns that `actions/checkout@v4` and
+      `astral-sh/setup-uv@v6` target the deprecated Node 20 runtime. Bump both
+      when newer majors are confirmed.
 - [ ] **Causal filtering:** U0's figures use zero-phase filters. A causal filter
       of the same order loses 60 % of threshold crossings. U2 onward must use
       causal filters for anything described as implant-realistic.
