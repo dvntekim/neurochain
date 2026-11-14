@@ -22,6 +22,11 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.6",
 ]
+sim = [
+    "lfpy>=2.3.9",
+    "mearec>=1.11.0",
+    "neuron>=9.0.2",
+]
 
 [build-system]
 requires = ["hatchling"]

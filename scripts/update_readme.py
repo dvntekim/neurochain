@@ -180,9 +180,117 @@ def u1_table(m: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def u2_table(m: dict[str, Any]) -> str:
+    """Build the U2 results table from ``results/u2_metrics.json``."""
+    cfg = m["config"]
+    ref = f"{cfg['reference_noise_uv']:g}"
+    rows: list[tuple[str, str, str]] = []
+    mearec = m["mearec"]
+    if mearec is None:
+        rows.append(("MEArec sweeps", "not run", "needs the recording (`make mearec`)"))
+    else:
+        rec, det, fixed = mearec["recording"], mearec["detection"], mearec["fixed_point"]
+        track = mearec["tracking"]
+
+        def f1(sweep: str, method: str, value: str) -> str:
+            return f"{det[sweep][method][value]['f1']:.2f}"
+
+        def ci(method: str) -> str:
+            row = det["noise"][method][ref]
+            return f"{row['f1']:.2f} ({row['f1_low']:.2f} to {row['f1_high']:.2f})"
+
+        rows += [
+            (
+                "Ground-truth recording",
+                f"{rec['n_channels']} channels, {rec['n_units']} units, {rec['duration_s']:g} s",
+                f"MEArec simulation; thresholds set on the first {cfg['calibration_s']:g} s, "
+                f"{rec['target_spikes']:,} target spikes scored on the rest",
+            ),
+            (
+                f"Detection F1 at in-vivo noise ({ref} µV)",
+                f"threshold {ci('threshold')}; NEO {ci('neo')}",
+                "causal, 30 kS/s, 10 bits; pooled over channels with a 95 % bootstrap interval",
+            ),
+            (
+                "The same with a zero-phase filter",
+                ci("offline"),
+                "what an offline analysis reports and an implant cannot run",
+            ),
+            (
+                "Threshold F1 against background noise",
+                " / ".join(f1("noise", "threshold", f"{n:g}") for n in cfg["noise_levels_uv"]),
+                "at " + ", ".join(f"{n:g}" for n in cfg["noise_levels_uv"]) + " µV rms",
+            ),
+            (
+                "Threshold F1 against ADC bits",
+                " / ".join(f1("bits", "threshold", str(b)) for b in (12, 10, 8, 6, 5)),
+                "at 12, 10, 8, 6, 5 bits over ±1 mV (steps of 0.5, 2, 8, 31 and 62 µV)",
+            ),
+            (
+                "Threshold F1 against sample rate",
+                " / ".join(f1("fs", "threshold", str(f)) for f in (30000, 15000, 10000, 5000)),
+                "at 30, 15, 10, 5 kS/s with no anti-alias filter beyond the amplifier",
+            ),
+            (
+                "Tracking the largest unit on a channel",
+                f"crossings {track['crossings'][ref]['mean']:.2f}; SBP "
+                f"{track['sbp_implant'][ref]['mean']:.2f}",
+                f"correlation with its firing at {ref} µV; crossings at 30 kS/s, SBP from a "
+                "300 Hz to 1 kHz amplifier sampled at 2 kS/s",
+            ),
+            (
+                "Fixed point against floating point",
+                f"threshold F1 {fixed['fixed_threshold_f1']:.3f} against "
+                f"{det['noise']['threshold'][ref]['f1']:.3f}; SBP r = "
+                f"{fixed['sbp_fixed_vs_float_r']:.3f}",
+                f"integer-only paths; accumulators of {fixed['acc_bits_wide']:.0f} bits at "
+                f"30 kS/s and {fixed['acc_bits_narrow']:.0f} bits at 2 kS/s",
+            ),
+            (
+                "Offset from truncating inside the 30 kS/s filter",
+                f"{abs(fixed['offset_wide_trunc_guard0']):.0f} codes",
+                f"against {abs(fixed['offset_wide_round_guard6']):.3f} with rounding and six "
+                "guard bits",
+            ),
+        ]
+    nason = m["nason"]
+    if nason is None:
+        rows.append(("Nason reproduction", "not run", "needs the Nason data (`make data`)"))
+    else:
+        sim = nason["simulation"]["arrangements"][0]
+        vivo, online = nason["in_vivo"], nason["online"]
+        rows += [
+            (
+                "SBP recomputed from the paper's broadband",
+                f"largest error {sim['sbp_reproduction_max_error']:.0e}",
+                "against the SBP stored with the Nason simulation; identical to rounding",
+            ),
+            (
+                "Correlation with the largest unit, in vivo",
+                f"SBP {vivo['sbp_r'][0]:.2f}; crossings {vivo['crossings_r'][0]:.2f}",
+                f"one channel, three sorted units; the largest is "
+                f"{vivo['unit_amplitude_uv'][0]:.0f} µV peak to peak",
+            ),
+            (
+                "Finger velocity decoded from 96 channels",
+                f"SBP R² {online['velocity_sbp']['r2']:.2f} ± "
+                f"{online['velocity_sbp']['r2_sem']:.2f}; "
+                f"crossings {online['velocity_crossings']['r2']:.2f} ± "
+                f"{online['velocity_crossings']['r2_sem']:.2f}; both "
+                f"{online['velocity_both']['r2']:.2f}",
+                f"same ridge readout, {online['n_folds']}-fold cross-validation over blocks of "
+                "trials, ± fold SEM",
+            ),
+        ]
+    lines = ["| Quantity | Value | How it is defined |", "|---|---|---|"]
+    lines += [f"| {name} | {value} | {note} |" for name, value, note in rows]
+    return "\n".join(lines)
+
+
 TABLES = {
     "U0_RESULTS": ("u0_metrics.json", u0_table),
     "U1_RESULTS": ("u1_metrics.json", u1_table),
+    "U2_RESULTS": ("u2_metrics.json", u2_table),
 }
 
 

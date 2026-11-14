@@ -82,6 +82,19 @@ first uses them. DOIs were resolved on 2026-11-13.
 - **ngspice.** Open-source circuit simulator, version 47 used here.
   <https://ngspice.sourceforge.io/>.
 
+## U2: ADC and features
+
+- **Buccino, A. P. and Einevoll, G. T. (2021).** MEArec: a fast and customizable
+  testbench simulator for ground-truth extracellular spiking activity.
+  *Neuroinformatics* 19, 185-204. <https://doi.org/10.1007/s12021-020-09467-7>.
+  The ground-truth recordings; version 1.11.0, with NEURON 9 and LFPy 2.3.
+- **Mukhopadhyay, S. and Ray, G. C. (1998).** A new interpretation of nonlinear
+  energy operator and its efficacy in spike detection. *IEEE Transactions on
+  Biomedical Engineering* 45(2), 180-187. <https://doi.org/10.1109/10.661266>.
+  The NEO detector and its threshold rule.
+- **Nason, S. R. et al. (2020)** (listed under U0). The spiking-band power recipe
+  and the data it is reproduced on.
+
 ## Later units (listed in the plan, not yet relied on)
 
 - **Karpowicz, B. M. et al. (2025).** Stabilizing brain-computer interfaces

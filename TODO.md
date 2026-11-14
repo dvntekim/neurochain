@@ -57,9 +57,9 @@ What opening the files showed, for the units that use them:
 - [ ] **NoMAD `cursor_vel` is not the derivative of `cursor_pos`** (correlation
       about 0.1 to 0.2 with the finite difference). Work out what it is before
       choosing the decoding target in U4.
-- [ ] **Nason online SBP is a sum over a varying number of samples** (0 to 4 per
-      1 ms bin, mean 2.0). Divide by `sample_width` or re-bin before comparing
-      it with threshold crossings in U2. Its unit is not stated.
+- [x] **Nason online SBP is a sum over a varying number of samples** (0 to 4 per
+      1 ms bin, mean 2.0). `neurochain.analysis.u2.online_features` divides by
+      the sample count in each 50 ms bin. Its unit is not stated.
 - [x] **Nason in-vivo broadband is the only µV-scaled real recording so far**
       (10 s, one channel, 30 kHz, three sorted units). Used in U1: its
       spike-band noise is 13.2 µV, 4.4 times the front-end model's floor.
@@ -69,9 +69,11 @@ What opening the files showed, for the units that use them:
 - [ ] **CI housekeeping:** GitHub warns that `actions/checkout@v4` and
       `astral-sh/setup-uv@v6` target the deprecated Node 20 runtime. Bump both
       when newer majors are confirmed.
-- [ ] **Causal filtering:** U0's figures use zero-phase filters. A causal filter
-      of the same order loses 60 % of threshold crossings. U2 onward must use
-      causal filters for anything described as implant-realistic.
+- [x] **Causal filtering:** U0's figures use zero-phase filters. A causal filter
+      of the same order loses 60 % of threshold crossings. From U2 on every
+      implant path is causal. U2 found the loss belonged to that 4th-order
+      filter: with a 2nd-order high-pass, causal detection scores F1 0.63
+      against 0.66 zero-phase.
 
 ## U1: electrode and front-end model — DONE
 
@@ -108,9 +110,9 @@ Carried forward from U1:
       times the front end's floor, and a quarter of the bias current costs 4 %
       in σ. A power model that sees only front-end noise would overspend on the
       amplifier.
-- [ ] **Aliasing belongs to U2's ADC model.** The amplifier is a single pole.
-      By a hand estimate about 30 % of its noise power lies above 15 kHz, and a
-      30 kHz sampler folds that back. The emulator drops it.
+- [x] **Aliasing belongs to U2's ADC model.** Done: the emulator's
+      `alias_zones` folds amplifier noise from above the Nyquist frequency back
+      in, and the ADC samples with no digital filter in front.
 - [ ] **No 1/f noise in the amplifier model.** Small in the spike band (about
       4 % of noise power for a 100 Hz corner, hand estimate), large below
       300 Hz. Add it before any LFP-band result.
@@ -118,17 +120,47 @@ Carried forward from U1:
 - [ ] **Harrison's supply voltage is unverified.** The 5 V that gives 16 µA and
       NEF 4.0 is from memory; the full text was not reachable. Check the paper.
 
-## U2: ADC and features
+## U2: ADC and features — DONE
 
 Done-criteria: detection F1 on MEArec across noise levels; SBP versus threshold
 crossings reproduced on Nason data.
 
-- [ ] MEArec recordings with ground-truth spikes
-- [ ] Bit-depth and sample-rate sweeps
-- [ ] Threshold, NEO and spiking-band-power paths, with causal filters
-- [ ] Fixed-point versions of each path
-- [ ] Nason loader and SBP-versus-threshold reproduction
-- [ ] `docs/U2_design.md`, key-number script, three prediction checks
+- [x] MEArec recording with ground-truth spikes (`make mearec`; 32 channels,
+      16 units, 60 s; the far-neuron background is kept separate so its level
+      can be set)
+- [x] ADC model: sample rate, bits and input range referred to the electrode;
+      sampling aliases, noise from above Nyquist is folded in
+- [x] Bit-depth and sample-rate sweeps, with bootstrap intervals over channels
+- [x] Threshold and NEO detectors and spiking-band power, all causal
+- [x] Fixed-point versions of each path, matching floating point
+- [x] SBP versus threshold crossings reproduced on the Nason data (simulation,
+      in vivo, and decoding from the online data)
+- [x] `make u2` writes four figures, `results/u2_metrics.json` and the README
+      table; `docs/U2_design.md` with four prediction checks; `make u2-key`
+
+Key number: causal threshold detection at in-vivo noise (13 µV) scores F1 0.63
+at 30 kS/s and 10 bits, and still 0.61 at 6 bits or at 10 kS/s.
+
+Carried forward from U2:
+
+- [ ] **The ADC's input range has to be chosen on real data.** MEArec has almost
+      no LFP. The Nason broadband has an RMS of 972 µV, which would clip the
+      ±1 mV range used here. U3 must choose range and analog high-pass corner
+      together: U1 showed a 300 Hz analog corner costs 12 % in amplifier noise.
+- [ ] **NEO was not retuned per ADC setting**, which is why its sweep curves are
+      irregular. If U3 keeps NEO as a candidate, tune its factor at each sample
+      rate and resolution. On F1 it has not beaten the plain threshold.
+- [ ] **U3's bridge from front end to decoder** (see U1's carried-forward item):
+      U2 gives the first half. Detection F1 and feature tracking are now known
+      as functions of noise, bits and sample rate. The second half is turning
+      those into a change in the Nason and NoMAD features.
+- [ ] **RTL parameters are fixed** for U7: 14 fractional bits and 6 guard bits
+      at 30 kS/s (29-bit accumulator); 8 and 2 at 2 kS/s (18-bit accumulator);
+      round half up; numerator `b0*(1 - z^-1)^2`. The Python in
+      `neurochain.fixedpoint` is the reference the RTL must match bit for bit.
+- [ ] **MEArec with NEURON 9:** two legacy synapse mechanisms are patched in a
+      copy under `data/mearec/` by `scripts/make_mearec.py`. If MEArec or NEURON
+      change version, check the patch still applies.
 
 ## U3: power model and co-design (A)
 

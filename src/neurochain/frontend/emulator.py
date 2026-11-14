@@ -23,8 +23,8 @@ Simplifications, each revisited later:
   the input, which the signal path ignores (the noise path does not).
 * Clipping is a hard limit on the output. A real amplifier that rails also
   takes time to recover; U5 models that.
-* Noise above the Nyquist frequency is dropped, not folded back. Aliasing is a
-  property of the sampler and belongs to the ADC model in U2.
+* By default noise above the Nyquist frequency is dropped. Pass
+  ``alias_zones`` to fold it back the way a sampler does (U2 does).
 * The amplifier inverts. The emulator does not, so spikes keep their polarity.
 """
 
@@ -41,6 +41,7 @@ from neurochain.recording import FloatArray, Recording
 
 Coupling = Literal["ac", "dc"]
 REFERENCE_HZ = 1000.0
+_PSD_GRID_POINTS = 4096
 """Frequency at which the gain is read when referring the output to the input."""
 
 
@@ -71,8 +72,38 @@ def reference_gain(frontend: FrontEnd) -> float:
     return float(np.abs(frontend.signal_gain(np.array([REFERENCE_HZ])))[0])
 
 
+def sampled_noise_psd(
+    freqs_hz: FloatArray, fs_hz: float, frontend: FrontEnd, alias_zones: int
+) -> FloatArray:
+    """Return the output noise density a sampler at ``fs_hz`` sees, in V²/Hz.
+
+    Sampling folds every frequency above the Nyquist frequency back into the
+    first zone: the sampled density at ``f`` is the sum of the continuous
+    density at ``|f + k fs|`` over all integers ``k``. The amplifier is a single
+    pole, so its noise falls only as ``1/f**2`` and the folded part is not
+    small.
+
+    Args:
+        freqs_hz: Frequencies in the first Nyquist zone, ``0 < f <= fs/2``.
+        fs_hz: Sampling rate.
+        frontend: The front end.
+        alias_zones: Number of ``k`` values on each side to include; 0 returns
+            the continuous density with nothing folded in.
+    """
+    psd = frontend.output_noise(freqs_hz).total.copy()
+    for k in range(1, alias_zones + 1):
+        psd += frontend.output_noise(k * fs_hz - freqs_hz).total
+        psd += frontend.output_noise(k * fs_hz + freqs_hz).total
+    return psd
+
+
 def output_noise(
-    n_samples: int, fs_hz: float, frontend: FrontEnd, rng: np.random.Generator
+    n_samples: int,
+    fs_hz: float,
+    frontend: FrontEnd,
+    rng: np.random.Generator,
+    *,
+    alias_zones: int = 0,
 ) -> FloatArray:
     """Draw amplifier output noise with the model's spectrum, in volts.
 
@@ -85,10 +116,18 @@ def output_noise(
         fs_hz: Sampling rate in hertz.
         frontend: The front end whose noise to draw.
         rng: Random generator.
+        alias_zones: Nyquist zones of out-of-band noise to fold in, as a
+            sampler would (see :func:`sampled_noise_psd`).
     """
     freqs = np.fft.rfftfreq(n_samples, d=1.0 / fs_hz)
     psd = np.zeros_like(freqs)
-    psd[1:] = frontend.output_noise(freqs[1:]).total
+    if freqs.size > _PSD_GRID_POINTS:
+        # The density is smooth, so evaluate it on a log grid and interpolate.
+        grid = np.geomspace(freqs[1], freqs[-1], _PSD_GRID_POINTS)
+        log_psd = np.log(sampled_noise_psd(grid, fs_hz, frontend, alias_zones))
+        psd[1:] = np.exp(np.interp(np.log(freqs[1:]), np.log(grid), log_psd))
+    else:
+        psd[1:] = sampled_noise_psd(freqs[1:], fs_hz, frontend, alias_zones)
     white = np.fft.rfft(rng.standard_normal(n_samples))
     # Unit-variance white noise has a one-sided density of 2 / fs.
     shaped = np.fft.irfft(white * np.sqrt(psd * fs_hz / 2.0), n=n_samples)
@@ -121,6 +160,7 @@ def emulate(
     dc_gain: float | None = None,
     add_noise: bool = True,
     settled: bool = True,
+    alias_zones: int = 0,
 ) -> EmulatorOutput:
     """Pass a signal through the emulated front end.
 
@@ -140,6 +180,9 @@ def emulate(
         settled: Start the filters in steady state for the first sample, as if
             the amplifier had been on for a long time. If false they start from
             rest, which shows the power-on transient.
+        alias_zones: Fold this many Nyquist zones of amplifier noise back into
+            the band, as an ADC sampling at ``fs_hz`` would. 0 leaves the noise
+            as a continuous-time observer would see it.
 
     Raises:
         ValueError: If the amplifier bandwidth is not below the Nyquist
@@ -165,7 +208,9 @@ def emulate(
         rng = np.random.default_rng(seed)
         scale = gain / reference_gain(frontend)
         for channel in range(out.shape[0]):
-            out[channel] += scale * output_noise(out.shape[1], fs_hz, frontend, rng)
+            out[channel] += scale * output_noise(
+                out.shape[1], fs_hz, frontend, rng, alias_zones=alias_zones
+            )
     swing = frontend.lna.output_swing_v
     saturated = float(np.mean(np.abs(out) >= swing))
     out = np.clip(out, -swing, swing)

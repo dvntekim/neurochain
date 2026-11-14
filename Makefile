@@ -1,6 +1,6 @@
 # NeuroChain: one command per result. Run `make help` for the list.
 .DEFAULT_GOAL := help
-.PHONY: help setup data data-status data-describe u0 u1 u1-key u0-key readme test test-fast lint format clean
+.PHONY: help setup data data-status data-describe mearec u0 u1 u1-key u2 u2-key u0-key readme test test-fast lint format clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-12s %s\n", $$1, $$2}'
@@ -35,6 +35,17 @@ u1: ## U1: electrode and front-end figures, metrics, netlists and the README tab
 
 u1-key: ## U1: print the key numbers (add ARGS="--bias-scale 0.5" to change a parameter)
 	uv run python scripts/u1_key_number.py $(ARGS)
+
+mearec: ## Generate the MEArec ground-truth recording (about a minute; needs a C compiler)
+	uv run --group sim python scripts/make_mearec.py
+
+u2: ## U2: ADC and feature figures, metrics and the README table (needs `make mearec` and Nason data)
+	uv run python scripts/u2_figures.py --strict
+	uv run python scripts/update_readme.py
+	uv run python scripts/u2_key_number.py
+
+u2-key: ## U2: print the key numbers (add ARGS="--bits 6" to change a setting)
+	uv run python scripts/u2_key_number.py $(ARGS)
 
 readme: ## Regenerate the README results tables from results/*.json
 	uv run python scripts/update_readme.py

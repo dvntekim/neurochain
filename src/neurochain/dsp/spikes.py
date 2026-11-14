@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy import stats
 
 from neurochain.recording import FloatArray, IntArray
@@ -26,6 +27,27 @@ def mad_sigma(x: FloatArray) -> float:
     """
     centred = np.abs(x - np.median(x))
     return float(np.median(centred) / GAUSSIAN_MAD_SCALE)
+
+
+def mad_sigma_integer(codes: NDArray[np.int64]) -> float:
+    """Estimate the noise sigma of integer-valued samples, to better than one code.
+
+    The plain median of integer data can only land on a whole number, so with a
+    noise of a few codes the estimate jumps in steps of 1/0.6745 codes, a 10 to
+    20 % error in any threshold derived from it. This treats each integer as a
+    bin one code wide and interpolates the median inside its bin (the textbook
+    median for grouped data).
+    """
+    magnitude = np.abs(codes - int(np.median(codes)))
+    counts = np.bincount(magnitude)
+    cumulative = np.cumsum(counts)
+    half = magnitude.size / 2.0
+    k = int(np.searchsorted(cumulative, half))
+    below = float(cumulative[k - 1]) if k > 0 else 0.0
+    # |x| = 0 covers half a code (0 to 0.5); every other value covers a full one.
+    lower, width = (0.0, 0.5) if k == 0 else (k - 0.5, 1.0)
+    median = lower + width * (half - below) / float(counts[k])
+    return float(median / GAUSSIAN_MAD_SCALE)
 
 
 def noise_crossing_rate_hz(

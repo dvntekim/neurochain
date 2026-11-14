@@ -23,8 +23,8 @@ The project has three parts:
 |---|---|---|
 | U0 | Repo, data loaders, band-split, spectra and spike amplitudes | **Done** |
 | U1 | Electrode and front-end model (ngspice), noise budget, NEF | **Done** |
-| U2 | ADC sweeps; threshold, NEO and spiking-band-power features; fixed point | Next |
-| U3 | Power model and co-design: accuracy vs µW Pareto | Planned |
+| U2 | ADC sweeps; threshold, NEO and spiking-band-power features; fixed point | **Done** |
+| U3 | Power model and co-design: accuracy vs µW Pareto | Next |
 | U4 | Kalman and GRU decoders, session-held-out evaluation | Planned |
 | U5 | Stimulation artifacts and fixed-point cancellation | Planned |
 | U6 | Electrode aging stress test | Planned |
@@ -167,6 +167,81 @@ or at 4.5 µW.*
 hard clip, and the emulator adds noise to a recording that already has its own.
 More in [docs/U1_design.md](docs/U1_design.md#limitations).
 
+### U2: how little the ADC can do, and whether spikes need counting at all
+
+Ground truth comes from a MEArec simulation (32 channels, 16 units, 60 s),
+passed through the U1 front end and an ADC model. Thresholds are set on the
+first 10 s of each channel and scored on the other 50 s. The spiking-band-power
+comparison uses the Nason data, with 5-fold cross-validation over blocks of
+trials.
+
+<!-- BEGIN U2_RESULTS -->
+| Quantity | Value | How it is defined |
+|---|---|---|
+| Ground-truth recording | 32 channels, 16 units, 60 s | MEArec simulation; thresholds set on the first 10 s, 28,820 target spikes scored on the rest |
+| Detection F1 at in-vivo noise (13 µV) | threshold 0.63 (0.58 to 0.68); NEO 0.64 (0.58 to 0.69) | causal, 30 kS/s, 10 bits; pooled over channels with a 95 % bootstrap interval |
+| The same with a zero-phase filter | 0.66 (0.61 to 0.71) | what an offline analysis reports and an implant cannot run |
+| Threshold F1 against background noise | 0.82 / 0.89 / 0.75 / 0.63 / 0.38 / 0.19 | at 0, 5, 10, 13, 20, 30 µV rms |
+| Threshold F1 against ADC bits | 0.63 / 0.63 / 0.63 / 0.61 / 0.12 | at 12, 10, 8, 6, 5 bits over ±1 mV (steps of 0.5, 2, 8, 31 and 62 µV) |
+| Threshold F1 against sample rate | 0.63 / 0.63 / 0.61 / 0.53 | at 30, 15, 10, 5 kS/s with no anti-alias filter beyond the amplifier |
+| Tracking the largest unit on a channel | crossings 0.61; SBP 0.50 | correlation with its firing at 13 µV; crossings at 30 kS/s, SBP from a 300 Hz to 1 kHz amplifier sampled at 2 kS/s |
+| Fixed point against floating point | threshold F1 0.632 against 0.634; SBP r = 0.999 | integer-only paths; accumulators of 29 bits at 30 kS/s and 18 bits at 2 kS/s |
+| Offset from truncating inside the 30 kS/s filter | 131 codes | against 0.008 with rounding and six guard bits |
+| SBP recomputed from the paper's broadband | largest error 1e-11 | against the SBP stored with the Nason simulation; identical to rounding |
+| Correlation with the largest unit, in vivo | SBP 0.75; crossings 0.19 | one channel, three sorted units; the largest is 580 µV peak to peak |
+| Finger velocity decoded from 96 channels | SBP R² 0.47 ± 0.01; crossings 0.46 ± 0.03; both 0.52 | same ridge readout, 5-fold cross-validation over blocks of trials, ± fold SEM |
+<!-- END U2_RESULTS -->
+
+This table is generated from [results/u2_metrics.json](results/u2_metrics.json)
+by `make readme`.
+
+Four findings:
+
+1. **Detection is limited by the brain, not the converter.** Cutting the ADC
+   from 10 bits to 6 costs 0.02 of F1. Raising the neural background from 13 to
+   20 µV costs 0.25.
+2. **A causal filter is not the problem U0 suggested.** With a gentle 2nd-order
+   high-pass, causal detection scores 0.63 against 0.66 for the zero-phase
+   filter. The large loss seen in U0 belonged to its 4th-order filter.
+3. **Spiking-band power at 2 kS/s decodes finger velocity as well as threshold
+   crossings at 30 kS/s**, and the two together do better than either. It is
+   not uniformly better: at in-vivo noise it tracks a single unit less closely
+   than crossings do.
+4. **Integer arithmetic has a trap.** Truncating products inside the 30 kS/s
+   high-pass shifts its output by 131 ADC codes, because the feedback loop
+   multiplies a half-step bias by 264. Rounding fixes it, and the same filter
+   at 2 kS/s barely has the problem.
+
+The exact commands are in the
+[prediction checks](docs/U2_design.md#5-prediction-checks).
+
+![Detection F1 against background noise, and precision-recall curves](figures/u2_detection_f1.png)
+
+*Left: F1 against neural background noise for two causal detectors and the
+zero-phase reference. Right: precision against recall as each detector's
+setting is swept, at 13 µV.*
+
+![Detection F1 against ADC bits and sample rate](figures/u2_adc_sweeps.png)
+
+*F1 at 13 µV background noise as the ADC's resolution (left) and sample rate
+(right) are reduced one at a time.*
+
+![Spiking-band power against threshold crossings on the Nason data and MEArec](figures/u2_sbp_vs_crossings.png)
+
+*Top: which unit each feature follows, in the paper's simulation and in vivo.
+Bottom left: tracking the largest unit on MEArec. Bottom right: finger velocity
+decoded from each feature with the same linear readout.*
+
+![Fixed-point error against guard bits and coefficient width](figures/u2_fixed_point.png)
+
+*Left: DC error of an integer-only high-pass with truncation and with rounding.
+Right: how many coefficient bits each path needs.*
+
+**Limits of these numbers.** MEArec is a simulation with constant firing rates
+and little LFP, the 50 µV target cut-off is a choice that moves F1, and the NEO
+detector was not retuned for each ADC setting. More in
+[docs/U2_design.md](docs/U2_design.md#limitations).
+
 ## Reproduce
 
 Requires [uv](https://docs.astral.sh/uv/) and `make`. Python 3.12 is installed
@@ -176,7 +251,9 @@ by uv.
 make setup     # environment and git hooks
 make u0        # download data (65 MB), write the U0 figures, metrics and table
 make u1        # U1 figures, metrics, table and netlists (needs ngspice and the Nason data)
-make test      # 190+ tests; the ones needing data or ngspice skip if absent
+make mearec    # generate the MEArec ground-truth recording (about a minute)
+make u2        # U2 figures, metrics and table (needs `make mearec` and the Nason data)
+make test      # 270+ tests; the ones needing data or ngspice skip if absent
 ```
 
 U1 needs [ngspice](https://ngspice.sourceforge.io/) (`brew install ngspice`) and
@@ -194,7 +271,7 @@ verifies every file by SHA-256.
 | [Neuralink Compression Challenge](https://web.archive.org/web/20250901131704/https://content.neuralink.com/compression-challenge/README.html) | U0, U2, U5, U7 | Scripted. Neuralink removed the originals, so the Internet Archive copy is used and its hash pinned |
 | [Nason et al. spiking-band-power data](https://doi.org/10.7302/wwya-5q86) | U2, U4 | Browser download (the host blocks scripts), then `make data` verifies it |
 | [NoMAD](https://doi.org/10.5061/dryad.q83bk3jtp) | U4, U6 | Browser download, or scripted with a free Dryad API token in `DRYAD_TOKEN` |
-| MEArec synthetic recordings | U2 | Generated locally |
+| MEArec synthetic recordings | U2 onward | Generated locally by `make mearec`, seeded |
 
 ## Layout
 
@@ -204,6 +281,10 @@ src/neurochain/
   data/                 registry, verified downloader, loaders, synthetic generator
   dsp/                  band-split filters, spectra, spike detection
   frontend/             electrode, amplifier, ngspice runner, emulator
+  adc.py                sampling and quantisation
+  features/             causal spike detectors, spiking-band power, scoring
+  fixedpoint.py         integer-only versions of the feature paths
+  decode/               decoders (so far a ridge readout with blocked cross-validation)
   analysis/             per-unit analyses and their figures
   viz.py                shared figure style
 scripts/                one script per figure or key number
@@ -221,6 +302,7 @@ checks: change one parameter, predict the result, then run it.
 
 - [U0: repo, data and band-split](docs/U0_design.md)
 - [U1: electrode and front-end model](docs/U1_design.md)
+- [U2: ADC and features](docs/U2_design.md)
 - [References](docs/references.md)
 
 ## Safety

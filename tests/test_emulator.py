@@ -4,7 +4,13 @@ import pytest
 from neurochain.data.synthetic import make_synthetic_recording
 from neurochain.dsp.spectra import band_power, welch_psd
 from neurochain.frontend.electrode import integrate_psd, log_grid
-from neurochain.frontend.emulator import emulate, emulate_recording, output_noise, reference_gain
+from neurochain.frontend.emulator import (
+    emulate,
+    emulate_recording,
+    output_noise,
+    reference_gain,
+    sampled_noise_psd,
+)
 from neurochain.frontend.model import FrontEnd, baseline_frontend
 from neurochain.recording import Recording
 
@@ -141,3 +147,35 @@ def test_emulate_recording_refuses_adc_counts(frontend: FrontEnd) -> None:
     counts = Recording(np.zeros((1, 100)), FS_HZ, "ADC LSB", "neuralink")
     with pytest.raises(ValueError, match="µV"):
         emulate_recording(counts, frontend, seed=0)
+
+
+def test_sampling_folds_out_of_band_noise_back(frontend: FrontEnd) -> None:
+    freqs = np.array([1000.0, 5000.0, 12_000.0])
+    plain = sampled_noise_psd(freqs, FS_HZ, frontend, alias_zones=0)
+    folded = sampled_noise_psd(freqs, FS_HZ, frontend, alias_zones=8)
+    np.testing.assert_allclose(plain, frontend.output_noise(freqs).total)
+    assert np.all(folded > plain)
+    # One zone adds the density at fs - f and fs + f, nothing else.
+    one = sampled_noise_psd(freqs, FS_HZ, frontend, alias_zones=1)
+    expected = (
+        plain
+        + frontend.output_noise(FS_HZ - freqs).total
+        + frontend.output_noise(FS_HZ + freqs).total
+    )
+    np.testing.assert_allclose(one, expected)
+    # The series converges: the next eight zones add little.
+    more = sampled_noise_psd(freqs, FS_HZ, frontend, alias_zones=16)
+    assert np.all(more / folded < 1.02)
+
+
+def test_emulated_noise_includes_the_folded_part(frontend: FrontEnd) -> None:
+    n = round(20 * FS_HZ)
+    plain = emulate(np.zeros(n), FS_HZ, frontend, seed=0).output_v
+    aliased = emulate(np.zeros(n), FS_HZ, frontend, seed=0, alias_zones=8).output_v
+    grid = np.linspace(10.0, FS_HZ / 2, 4000)
+    predicted = np.sqrt(
+        np.trapezoid(sampled_noise_psd(grid, FS_HZ, frontend, 8), grid)
+        / np.trapezoid(sampled_noise_psd(grid, FS_HZ, frontend, 0), grid)
+    )
+    assert aliased.std() / plain.std() == pytest.approx(predicted, rel=0.02)
+    assert predicted > 1.05

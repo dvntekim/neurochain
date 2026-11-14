@@ -157,20 +157,20 @@
   "emulator": {
     "fs_hz": 30000.0,
     "seconds": 60.0,
-    "band_output_rms_measured_uv": 295.1221908088831,
+    "band_output_rms_measured_uv": 295.12215113587746,
     "band_output_rms_predicted_uv": 295.3624851757908,
-    "sigma_after_filter_measured_uv": 3.0029336221683867,
+    "sigma_after_filter_measured_uv": 3.002933892307424,
     "sigma_after_filter_predicted_uv": 3.001580965047978
   },
   "nason": {
     "fs_hz": 30000.0,
     "sigma_recorded_uv": 13.229813232910857,
     "sigma_band_limited_uv": 12.840843746205083,
-    "sigma_emulated_uv": 13.262484824923122,
+    "sigma_emulated_uv": 13.262485619544172,
     "sigma_predicted_uv": 13.186991939187365,
     "sigma_model_floor_uv": 3.001580965047978,
     "recorded_over_model": 4.407614982559495,
-    "sigma_quarter_bias_uv": 13.805434650122974,
+    "sigma_quarter_bias_uv": 13.80543469697626,
     "quarter_bias_power_uw": 4.5,
     "detections_recorded": 823,
     "detections_emulated": 821
